@@ -1,2 +1,5 @@
 .vscode
 *Tmp
+execution_logs.zip
+execution_logs/
+.DS_Store

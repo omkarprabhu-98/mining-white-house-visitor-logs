@@ -9,36 +9,44 @@ APP_OUT = $(OUT)/$(APP)
 DATA_DIR = ${OUT}/data
 DATA = 1x
 
-$(APP): $(SRC)
+jar: $(SRC)
 	mkdir -p $(OUT)
 	mkdir -p $(APP_OUT)
 	javac -classpath `$(HADOOP) classpath` -d $(APP_OUT)/ $(SRC) 
 	jar -cvf $(APP_JAR) -C $(APP_OUT)/ .
 	mv $(APP_JAR) $(OUT)
 
-$(DATA):
+define get_data
+	curl $(1) -o $(2).zip && unzip $(2).zip -d $(DATA_DIR) && rm $(2).zip && rm -rf $(DATA_DIR)/__MACOSX
+endef
+
+data:
 	mkdir -p $(DATA_DIR)
-ifeq ($(DATA), 6x)
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/05/2021.01_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data1
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/06/2021.02_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data2
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/06/2021.03_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data3
+ifeq ($(DATA), 2x)
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2013.csv__0.zip, data2)
+else ifeq ($(DATA), 6x)
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2014_03.csv_.zip, data1)
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2012.csv_.zip, data3)
 else ifeq ($(DATA), 14x)
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/05/2021.01_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data1
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/06/2021.02_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data2
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/06/2021.03_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data3
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/07/2021.04_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data4
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/08/2021.05_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data5
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2013.csv__0.zip, data2)
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2012.csv_.zip, data3)
+	$(call get_data, https://obamawhitehouse.archives.gov/files/disclosures/visitors/WhiteHouse-WAVES-Released-1210.zip, data4)
 else 
 	# ifeq ($(DATA), 1x)
-	curl https://www.whitehouse.gov/wp-content/uploads/2021/05/2021.01_WAVES-ACCESS-RECORDS.csv -o $(DATA_DIR)/data1
+	$(call get_data, https://obamawhitehouse.archives.gov/sites/default/files/disclosures/whitehouse-waves-2014_03.csv_.zip, data1)
 endif
 	$(HADOOP_HOME)/bin/hdfs dfs -mkdir -p input
 	$(HADOOP_HOME)/bin/hdfs dfs -put -f $(DATA_DIR)/* input
 
-run: $(APP) $(DATA)
+run: jar data
+ifeq ($(APP), Top10)
 	$(HADOOP) jar $(OUT)/$(APP_JAR) $(APP) $(COUNT_KEY) input tmp output
-	$(HADOOP_HOME)/bin/hdfs dfs -get output/part-r-00000 $(OUT)/output
-	cat $(OUT)/output
+else 
+	$(HADOOP) jar $(OUT)/$(APP_JAR) $(APP) $(COUNT_KEY) input output
+endif
+	mkdir -p $(OUT)/output/
+	$(HADOOP_HOME)/bin/hdfs dfs -get output/* $(OUT)/output/
+	cat $(OUT)/output/part-r-*
 
 clean: 
 	rm -rf $(OUT) \
