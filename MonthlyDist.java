@@ -91,7 +91,7 @@ public class MonthlyDist {
 		count.setMapperClass(CountMapper.class);
 		count.setReducerClass(CountReducer.class);
 		// args[1] => input, args[2] => output
-		// FileInputFormat.setMaxInputSplitSize(count, 40000000);
+		FileInputFormat.setMaxInputSplitSize(count, 40000000);
 		FileInputFormat.addInputPath(count, new Path(args[1]));
 		FileOutputFormat.setOutputPath(count, new Path(args[2]));
 		count.setNumReduceTasks(3);
