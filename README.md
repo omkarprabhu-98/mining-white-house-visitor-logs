@@ -1,5 +1,7 @@
 # Mining White House Visitor Logs
 
+### FALL 2021 Georgia Tech | CS 6220 | Big Data Systems and Analytics | Assignment 1 | Problem 2 - Option 2 
+
 - Check [Data.md](DATA.md): for details about the dataset and groups
 - Check [Setup.md](SETUP.md) for installation
 - Experiments and Results can be found here: [Experiments_and_Results.pdf](Experiments_and_Results.pdf)
